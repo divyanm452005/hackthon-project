@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet"href="c:\Users\HP\OneDrive\Desktop\4MU23CS024\summerizer.py"
+ <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CheckPro - Product Management App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        p {
+            text-align: center;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        textarea {
+            height: 200px;
+            resize: vertical;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .dashboard-section {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        #imagePreview {
+            max-width: 100%;
+            height: auto;
+            margin-top: 10px;
+        }
+        #summaryOutput {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .emoji-btn {
+            font-size: 24px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            margin: 0 5px;
+        }
+        .emoji-btn:hover {
+            opacity: 0.7;
+        }
+        .feedback {
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Landing Page -->
+        <div id="landing" class="page active">
+            <h1>CheckPro</h1>
+            <p>Welcome to CheckPro - Your Product Management and Review Summarizer App</p>
+            <button id="proceedBtn">Proceed to Login</button>
+        </div>
+
+        <!-- Login Page -->
+        <div id="login" class="page">
+            <h1>Login to CheckPro</h1>
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            <button id="loginBtn">Login</button>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboard" class="page">
+            <h1>Dashboard</h1>
+            <div class="dashboard-section">
+                <h2>Upload Product Pictures</h2>
+                <input type="file" id="imageUpload" accept="image/*">
+                <img id="imagePreview" src="" alt="Product Image Preview" style="display: none;">
+            </div>
+            <div class="dashboard-section">
+                <h2>Product Reviews Summarizer</h2>
+                <textarea id="reviewsInput" placeholder="Paste product reviews here, one per line..."></textarea>
+                <textarea id="userCommands" placeholder="Add user commands/comments (e.g., focus on 'quality' or 'price')..."></textarea>
+                <button id="summarizeBtn">Summarize Reviews</button>
+                <div id="summaryOutput"></div>
+                <div class="feedback">
+                    <p>Rate this summary:</p>
+                    <button class="emoji-btn" id="likeBtn">👍</button>
+                    <button class="emoji-btn" id="dislikeBtn">👎</button>
+                    <p id="feedbackCount">Likes: 0 | Dislikes: 0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Page navigation
+        document.getElementById('proceedBtn').addEventListener('click', () => showPage('login'));
+        document.getElementById('loginBtn').addEventListener('click', () => {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            if (username.trim() && password.trim()) {
+                showPage('dashboard');
+            } else {
+                alert('Please enter username and password.');
+            }
+        });
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        // Image upload preview
+        document.getElementById('imageUpload').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById('imagePreview');
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Like/Dislike counters
+        let likes = 0;
+        let dislikes = 0;
+        document.getElementById('likeBtn').addEventListener('click', () => {
+            likes++;
+            updateFeedback();
+        });
+        document.getElementById('dislikeBtn').addEventListener('click', () => {
+            dislikes++;
+            updateFeedback();
+        });
+        function updateFeedback() {
+            document.getElementById('feedbackCount').textContent = `Likes: ${likes} | Dislikes: ${dislikes}`;
+        }
+
+        // Summarizer logic with user commands/comments
+        document.getElementById('summarizeBtn').addEventListener('click', function() {
+            const reviewsText = document.getElementById('reviewsInput').value;
+            const userCommands = document.getElementById('userCommands').value;
+            let reviews = reviewsText.split('\n').filter(review => review.trim() !== '');
+            
+            // Append user commands/comments as an additional "review" for analysis
+            if (userCommands.trim()) {
+                reviews.push(userCommands);
+            }
+            
+            if (reviews.length === 0) {
+                document.getElementById('summaryOutput').innerHTML = '<p>No reviews or commands provided.</p>';
+                return;
+            }
+            
+            // Simple sentiment analysis
+            const positiveWords = ['good', 'great', 'excellent', 'amazing', 'love', 'best', 'awesome', 'fantastic'];
+            const negativeWords = ['bad', 'terrible', 'awful', 'hate', 'worst', 'poor', 'disappointed', 'broken'];
+            
+            let totalPositive = 0;
+            let totalNegative = 0;
+            let themes = {};
+            
+            reviews.forEach(review => {
+                const words = review.toLowerCase().split(/\s+/);
+                words.forEach(word => {
+                    if (positiveWords.includes(word)) totalPositive++;
+                    if (negativeWords.includes(word)) totalNegative++;
+                    
+                    if (word.length > 3 && !positiveWords.includes(word) && !negativeWords.includes(word)) {
+                        themes[word] = (themes[word] || 0) + 1;
+                    }
+                });
+            });
+            
+            const topThemes = Object.entries(themes).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            const totalReviews = reviews.length;
+            const overallSentiment = totalPositive > totalNegative ? 'Positive' : totalNegative > totalPositive ? 'Negative' : 'Neutral';
+            
+            let summaryHTML = `<h2>Summary</h2>
+                               <p>Total Reviews/Inputs: ${totalReviews}</p>
+                               <p>Overall Sentiment: ${overallSentiment} (Positive mentions: ${totalPositive}, Negative mentions: ${totalNegative})</p>
+                               <p>Top Themes: ${topThemes.map(([theme, count]) => `${theme} (${count})`).join(', ')}</p>`;
+            
+            document.getElementById('summaryOutput').innerHTML = summaryHTML;
+        });
+    </script>
+</body>
+</html>
